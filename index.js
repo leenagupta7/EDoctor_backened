@@ -39,9 +39,9 @@ app.post('/createblog', async (req, res) => {
     } else {
         createBlog(); // No file uploaded, proceed to create the blog
     }
-    const user= await User.findOne({userId:req.body.userId});
-    if(user && user.picture){
-        req.body.userImage=user.picture;
+    const user = await User.findOne({ userId: req.body.userId });
+    if (user && user.picture) {
+        req.body.userImage = user.picture;
     }
     function createBlog() {
         const blog = new Blog({
@@ -121,44 +121,41 @@ app.put('/undislikeblog', async (req, res) => {
 })
 app.post('/updateProfile', async (req, res) => {
     const { userId } = req.body;
-    console.log(req.files.file);
-    const file = req.files.file ? req.files.file : null;
-    if (file === null) {
-        return res.status(500).json({ error: 'Error file is null' })
+    const file = req.files.file;
+
+    if (!file) {
+        return res.status(500).json({ error: 'Error: File is missing' });
     }
-    cloudinary.uploader.upload(file.tempFilePath, async (err, result) => {
-        console.log(result);
+
+    try {
+        const result = await cloudinary.uploader.upload(file.tempFilePath);
 
         let user = await User.findOne({ userId });
 
         if (!user) {
             user = await User.create({
                 userId: req.body.userId,
+                list: [],
+                addmedicine: [],
             });
         }
+
         user.picture = result.secure_url;
-        let blogs = await Blog.find({ userId });
-        if (blogs) {
-            for (let i = 0; i < blogs.length; i++) {
-                blogs[i].picture = result.secure_url;
-                await blogs[i].save(); 
-            }
-        }
-        await user.save()
-            .then(result => {
-                console.log(result);
-                res.status(200).json({
-                    user: user
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                res.status(500).json({
-                    error: 'Error in updating profile pic.',
-                });
-            });
-    })
-})
+
+        // Update profile picture for related blogs
+        await Blog.updateMany({ userId }, { $set: { picture: result.secure_url } });
+
+        // Save the updated user
+        await user.save();
+
+        console.log('Profile picture updated:', result.secure_url);
+        res.status(200).json({ user });
+    } catch (err) {
+        console.error('Error in updating profile pic:', err);
+        res.status(500).json({ error: 'Error in updating profile pic.' });
+    }
+});
+
 app.get('/getProfile/:id', async (req, res) => {
     const userId = req.params.id;
     console.log(userId);
@@ -189,11 +186,13 @@ app.post('/postcontact', async (req, res) => {
         const user = await User.findOne({ userId: req.body.userId });
         if (user) {
             const data = await User.findByIdAndUpdate(user._id, {
-                $addToSet: { list: {
-                    name:req.body.name,
-                    relation:req.body.relation,
-                    phonenumber:req.body.phonenumber,
-                } }
+                $addToSet: {
+                    list: {
+                        name: req.body.name,
+                        relation: req.body.relation,
+                        phonenumber: req.body.phonenumber,
+                    }
+                }
             }, { new: true });
             console.log(data);
             res.status(200).json({
@@ -206,6 +205,61 @@ app.post('/postcontact', async (req, res) => {
                     name: req.body.name,
                     relation: req.body.relation,
                     phonenumber: req.body.phonenumber,
+                }],addmedicin:[],
+                picture:''
+            });
+            const savedUser = await newUser.save();
+            console.log(savedUser);
+            res.status(200).json({
+                new_user: savedUser,
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: 'Error in updating user.',
+        });
+    }
+});
+app.get('/getcontact/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const data = await User.find({ userId: userId });
+        //console.log(data);
+        res.status(200).json({
+            data,
+        });
+    } catch (err) {
+        console.log(err);
+    }
+});
+app.post('/addmedicine', async (req, res) => {
+    try {
+        console.log(req.body);
+        const user = await User.findOne({ userId: req.body.userId });
+        if (user) {
+            const data = await User.findByIdAndUpdate(user._id,
+                {
+                    $addToSet: {
+                        addmedicine: {
+                            text: req.body.task,
+                            dateTime: req.body.dateTime
+                        }
+                    }
+                },
+                { new: true }
+            );
+            console.log(data);
+            res.status(200).json({
+                updated_user: data,
+            });
+        } else {
+            const newUser = new User({
+                userId: req.body.userId,
+                list:[],
+                addmedicine: [{
+                    text: req.body.task,
+                    dateTime: req.body.dateTime
                 }]
             });
             const savedUser = await newUser.save();
@@ -221,11 +275,48 @@ app.post('/postcontact', async (req, res) => {
         });
     }
 });
-
-
+app.get('/getmedicine/:id',async(req,res)=>{
+    console.log('hey');
+    const userId= req.params.id;
+    try{
+        const data = await User.findOne({userId:userId});
+        res.status(200).json(data);
+    }catch(err){
+        console.log('error in getmedicine backened',err);
+    }
+})
+app.delete('/deletemedicine/:id/:index', async (req, res) => {
+    const userId = req.params.id;
+    const index = req.params.index;
+    console.log('index',index);
+    try {
+        const user = await User.findOne({ userId: userId });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        // Check if the index is valid
+        if (index < 0 || index >= user.addmedicine.length) {
+            return res.status(400).send('Invalid index');
+        }
+        let updatedaddmedicine = []; // Initialize as an empty array
+        for (let i = 0; i < user.addmedicine.length; i++) {
+            if (i != index) { 
+                updatedaddmedicine.push(user.addmedicine[i]);
+            }
+        }
+        console.log(updatedaddmedicine);
+        user.addmedicine = updatedaddmedicine;
+        await user.save(); // Save the updated user
+        //console.log('Updated user:', user);
+        res.status(200).json({ user: user });
+    } catch (err) {
+        console.log('erorr',err);
+        res.status(500).send('Error deleting medicine');
+    }
+});
 
 mongoose.connect('mongodb+srv://leenagupta993:B0NqYpbQ3IviDJM3@cluster0.iextdh3.mongodb.net/EDoctor')
-.then(()=>{
-    console.log('website it run at 4000')
-    app.listen(port, () => console.log(`Server is running on port ${port}`));
-}).catch(err => console.log(err));
+    .then(() => {
+        console.log('website it run at 4000')
+        app.listen(port, () => console.log(`Server is running on port ${port}`));
+    }).catch(err => console.log(err));

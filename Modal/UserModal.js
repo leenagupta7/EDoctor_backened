@@ -7,8 +7,18 @@ const UserSchema = new mongoose.Schema({
     },
     picture: {
         type: String,
-        required: true,
     },
+    addmedicine:[{
+        text:{
+            type:String,
+            required:true,
+        },
+        dateTime:{
+            type:String,
+            required:true,
+        }
+    }
+    ],
     list: [{
         name: { // Changed from Name to name
             type: String,
@@ -22,7 +32,7 @@ const UserSchema = new mongoose.Schema({
             type: String,
             required: true,
         }
-    }]
+    }],
 }, {
     timestamps: true,
 });
