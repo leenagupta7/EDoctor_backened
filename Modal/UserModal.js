@@ -33,6 +33,20 @@ const UserSchema = new mongoose.Schema({
             required: true,
         }
     }],
+    task: {
+        complete: {
+            type: Number, // Change to Number type
+            default: 0
+        },
+        remove: {
+            type: Number, // Change to Number type
+            default: 0
+        },
+        snooze: {
+            type: Number, // Change to Number type
+            default: 0
+        }
+    }
 }, {
     timestamps: true,
 });

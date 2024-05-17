@@ -276,7 +276,7 @@ app.post('/addmedicine', async (req, res) => {
     }
 });
 app.get('/getmedicine/:id',async(req,res)=>{
-    console.log('hey');
+   // console.log('hey');
     const userId= req.params.id;
     try{
         const data = await User.findOne({userId:userId});
@@ -285,9 +285,11 @@ app.get('/getmedicine/:id',async(req,res)=>{
         console.log('error in getmedicine backened',err);
     }
 })
-app.delete('/deletemedicine/:id/:index', async (req, res) => {
+app.delete('/deletemedicine/:id/:index/:task', async (req, res) => {
     const userId = req.params.id;
     const index = req.params.index;
+    const task = req.params.task;
+    console.log('task',task);
     console.log('index',index);
     try {
         const user = await User.findOne({ userId: userId });
@@ -304,14 +306,46 @@ app.delete('/deletemedicine/:id/:index', async (req, res) => {
                 updatedaddmedicine.push(user.addmedicine[i]);
             }
         }
-        console.log(updatedaddmedicine);
         user.addmedicine = updatedaddmedicine;
+        if(task==="c"){
+            user.task.complete+=1;
+        }else{
+            user.task.remove+=1;
+        }
         await user.save(); // Save the updated user
-        //console.log('Updated user:', user);
+        console.log('Updated user:', user);
+        
         res.status(200).json({ user: user });
     } catch (err) {
         console.log('erorr',err);
         res.status(500).send('Error deleting medicine');
+    }
+});
+app.put('/updatemedicine/:id', async (req, res) => {
+    const userId = req.params.id;
+    const index = req.body.index;
+    const dateTime = req.body.dateTime;
+    
+
+
+    console.log(dateTime);
+    console.log('hey');
+    try {
+        const user = await User.findOne({ userId: userId });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        if (index < 0 || index >= user.addmedicine.length) {
+            return res.status(400).send('Invalid index');
+        }
+        user.addmedicine[index].dateTime = dateTime;
+        user.task.snooze+=1;
+        console.log(user);
+        await user.save(); // Corrected to call user.save() as a function
+        res.status(200).json(user);
+    } catch (err) {
+        console.log('Error updating medicine on the backend side:', err);
+        res.status(500).send('Error updating medicine');
     }
 });
 
