@@ -46,6 +46,14 @@ const UserSchema = new mongoose.Schema({
             type: Number, // Change to Number type
             default: 0
         }
+    },
+    cart: {
+        type: [Number],
+        default: () => new Array(61).fill(0) // Initialize cart with zeros
+    },
+    favourite: {
+        type: [Boolean],
+        default: () => new Array(61).fill(false) // Initialize favourite with false
     }
 }, {
     timestamps: true,

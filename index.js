@@ -155,13 +155,12 @@ app.post('/updateProfile', async (req, res) => {
         res.status(500).json({ error: 'Error in updating profile pic.' });
     }
 });
-
 app.get('/getProfile/:id', async (req, res) => {
     const userId = req.params.id;
-    console.log(userId);
+    //console.log(userId);
     try {
         const user = await User.find({ userId: userId });
-        console.log(user);
+        //console.log(user);
         res.status(200).json({
             user: user
         });
@@ -346,6 +345,122 @@ app.put('/updatemedicine/:id', async (req, res) => {
     } catch (err) {
         console.log('Error updating medicine on the backend side:', err);
         res.status(500).send('Error updating medicine');
+    }
+});
+app.post('/addproduct', async (req, res) => {
+    const { userId, index } = req.body;
+
+    try {
+        const user = await User.findOne({ userId });
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        user.cart = user.cart || [];
+
+        user.cart[index] = (user.cart[index] || 0) + 1;
+
+        await user.save();
+
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Error adding product:', err);
+        res.status(500).send('Error adding product');
+    }
+});
+app.post('/removeproduct', async (req, res) => {
+    const { userId, index } = req.body;
+
+    console.log('Received index:', index);
+
+    try {
+        const user = await User.findOne({ userId });
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Ensure the cart array exists
+        if (!Array.isArray(user.cart)) {
+            user.cart = [];
+        }
+
+        // Ensure the cart array has a number at the specified index
+        if (typeof user.cart[index] !== 'number') {
+            user.cart[index] = 0;
+        }
+
+        // Increment the value at the specified index
+        if(user.cart[index]>0){
+        user.cart[index]--;
+        await user.save();
+}
+        console.log('Updated user cart:', user.cart);
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Error remove product:', err);
+        res.status(500).send('Error remove product');
+    }
+});
+app.post('/favproduct', async (req, res) => {
+    const { userId, index } = req.body;
+    console.log('favproduct');
+    try {
+        const user = await User.findOne({ userId });
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        user.favourite[index]=true;
+        console.log(user.favourite);
+        await user.save();
+
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Error adding product:', err);
+        res.status(500).send('Error adding product');
+    }
+});
+app.post('/nonfavproduct', async (req, res) => {
+    const { userId, index } = req.body;
+    try {
+        const user = await User.findOne({ userId });
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        user.favourite[index]=false;
+        await user.save();
+        console.log('Updated user cart:', user.favourite);
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Error remove product:', err);
+        res.status(500).send('Error remove product');
+    }
+});
+
+app.get('/getproduct/:id', async (req, res) => {
+    const userId = req.params.id;
+    console.log('getproduct');
+    try {
+        const user = await User.findOne({ userId });
+
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        // if (!Array.isArray(user.cart) || user.cart.length !== 61) {
+        //     user.cart = new Array(61).fill(0);
+        // }
+
+        // if (!Array.isArray(user.favourite) || user.favourite.length !== 61) {
+        //     user.favourite = new Array(61).fill(false);
+        // }
+        console.log(user);
+        res.status(200).json(user);
+    } catch (err) {
+        console.error('Error remove product:', err);
+        res.status(500).send('Error remove product');
     }
 });
 
