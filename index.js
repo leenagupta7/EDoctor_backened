@@ -6,7 +6,7 @@ const app = express();
 const fileupload = require('express-fileupload');
 const User = require('./Modal/UserModal');
 const cloudinary = require('cloudinary').v2;
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4200;
 require('dotenv').config();
 
 app.use(express.json());
@@ -20,6 +20,50 @@ cloudinary.config({
     api_key: '954137826352828',
     api_secret: 'lF3OAF50khe4Qwn4gbhtlm34xns',
 });
+const stripe = require("stripe")(process.env.secret_key);
+
+app.post('/checkout-session', async (req, res) => {
+    console.log(req.body.totalAmount);
+    try {
+        const { cart, Allproduct } = req.body;
+        console.log(Allproduct);
+
+        const lineItems = Allproduct.map((product, index) => {
+            if (cart[index]) {
+                return {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: product.name, // Assuming each product has a 'name' property
+                        },
+                        unit_amount: Math.round(product.newprice * 100), // Amount in cents
+                    },
+                    quantity: 1, // Quantity is 1 since cart is an array of booleans
+                };
+            }
+        }).filter(item => item !== undefined); // Filter out undefined items
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: lineItems,
+            mode: 'payment',
+            success_url: 'http://localhost:5173/success',
+            cancel_url: 'http://localhost:5173/cancel',
+        });
+        
+        res.send({ id: session.id }); // Ensure the session ID is sent in the response
+    } catch (err) {
+        console.error('Error in checkout-session:', err); // Log the error for debugging
+        res.status(500).send('Error in checkout-session');
+    }
+});
+
+
+
+app.listen(4000, () => {
+    console.log('Server running on port 4000');
+});
+
 app.post('/createblog', async (req, res) => {
     console.log(req.body);
     let image = null;
@@ -439,7 +483,6 @@ app.post('/nonfavproduct', async (req, res) => {
         res.status(500).send('Error remove product');
     }
 });
-
 app.get('/getproduct/:id', async (req, res) => {
     const userId = req.params.id;
     console.log('getproduct');
@@ -463,6 +506,7 @@ app.get('/getproduct/:id', async (req, res) => {
         res.status(500).send('Error remove product');
     }
 });
+app.post('/')
 
 mongoose.connect('mongodb+srv://leenagupta993:B0NqYpbQ3IviDJM3@cluster0.iextdh3.mongodb.net/EDoctor')
     .then(() => {
