@@ -57,112 +57,9 @@ app.post('/checkout-session', async (req, res) => {
         res.status(500).send('Error in checkout-session');
     }
 });
-
-
-
 app.listen(4000, () => {
     console.log('Server running on port 4000');
 });
-
-app.post('/createblog', async (req, res) => {
-    console.log(req.body);
-    let image = null;
-
-    // Check if a file is uploaded
-    if (req.files && req.files.file) {
-        const file = req.files.file;
-        cloudinary.uploader.upload(file.tempFilePath, async (err, result) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).json({ error: 'Error uploading file to Cloudinary.' });
-            }
-            console.log(result);
-            image = result.secure_url; // Set the image URL
-            createBlog();
-        });
-    } else {
-        createBlog(); // No file uploaded, proceed to create the blog
-    }
-    const user = await User.findOne({ userId: req.body.userId });
-    if (user && user.picture) {
-        req.body.userImage = user.picture;
-    }
-    function createBlog() {
-        const blog = new Blog({
-            userId: req.body.userId,
-            username: req.body.username,
-            picture: req.body.userImage,
-            title: req.body.title,
-            description: req.body.description,
-            image: image, // Use the image URL if available
-        });
-
-        blog.save()
-            .then(result => {
-                console.log(result);
-                res.status(200).json({
-                    new_blog: result,
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                res.status(500).json({
-                    error: 'Error in creating a blog.',
-                });
-            });
-    }
-});
-app.get('/getblog', async (req, res) => {
-    try {
-        const blogs = await Blog.find().sort({ createdAt: -1 });
-        res.status(200).json(blogs);
-    } catch (err) {
-        console.log('error in fetching blogs:', err);
-        res.status(500).json({ err: 'Internal Server Error' });
-    }
-})
-app.delete('/blogdelete/:_id', async (req, res) => {
-    //console.log("hey");
-    const id = req.params._id;
-    try {
-        const data = await Blog.findByIdAndDelete(id);
-        //console.log(data);
-        res.json(data);
-    } catch (err) {
-        console.log({ "blogdelete in backened": err });
-    }
-})
-app.put('/unlikeblog', async (req, res) => {
-    try {
-        const data = await Blog.findByIdAndUpdate(req.body._id, {
-            $pull: { like: req.body.userId }
-        }, { new: true });
-        //console.log({'unlike':data})
-        res.json(data);
-    } catch (err) {
-        console.log({ "error in backened like part": err })
-    }
-})
-app.put('/dislikeblog', async (req, res) => {
-    const { _id } = req.body;
-    try {
-        const data = await Blog.findByIdAndUpdate(_id, { $addToSet: { dislike: req.body.userId } }, { new: true });
-        res.json(data);
-    }
-    catch (error) {
-        console.log({ "error in backend dislike part": error })
-    }
-})
-app.put('/undislikeblog', async (req, res) => {
-    const { _id } = req.body;
-    try {
-        const data = await Blog.findByIdAndUpdate(_id, { $pull: { dislike: req.body.userId } }, { new: true });
-        res.json(data);
-    }
-    catch (error) {
-        console.log({ "error in backend dislike part": error })
-    }
-})
 app.post('/updateProfile', async (req, res) => {
     const { userId } = req.body;
     const file = req.files.file;
@@ -506,7 +403,29 @@ app.get('/getproduct/:id', async (req, res) => {
         res.status(500).send('Error remove product');
     }
 });
-app.post('/')
+app.delete('/deladdcontact/:id/:index', async (req, res) => {
+    try {
+        const { id, index } = req.params;
+        const user = await User.findOne({ userId: id });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        let updatelist=[];
+        for (let i = 0; i < user.list.length; i++) {
+            if (i != index) { 
+                updatelist.push(user.list[i]);
+            }
+        }
+        user.list=updatelist;
+        console.log(user.list);
+        await user.save();
+        res.send(user);
+    } catch (err) {
+        console.error('Error in backend:', err);
+        res.status(500).send('Error in backend');
+    }
+});
+
 
 mongoose.connect('mongodb+srv://leenagupta993:B0NqYpbQ3IviDJM3@cluster0.iextdh3.mongodb.net/EDoctor')
     .then(() => {
