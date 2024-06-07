@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Blog = require('./Modal/BlogModal')
+const Doctor = require('./Modal/Doctor');
 const cors = require('cors');
 const app = express();
 const fileupload = require('express-fileupload');
@@ -60,6 +60,71 @@ app.post('/checkout-session', async (req, res) => {
 app.listen(4000, () => {
     console.log('Server running on port 4000');
 });
+app.post('/adddoctor', async (req, res) => {
+    const file = req.files?.file ?? null;
+    if (!file) {
+        return res.status(500).json({ error: 'Error file is null' });
+    }
+    cloudinary.uploader.upload(file.tempFilePath, async (err, result) => {
+        if (err) {
+            console.error('Error uploading to Cloudinary:', err);
+            return res.status(500).json({ error: 'Error uploading to Cloudinary' });
+        }
+        const newDoctor = new Doctor({
+            name: req.body.name,
+            specialization: req.body.specialization,
+            college_name: req.body.college,
+            experience: req.body.experience,
+            image: result.secure_url,
+        });
+        newDoctor.save()
+            .then(result => {
+                console.log({ "your Doctor is saved": result });
+                res.status(200).json({
+                    new_product: result,
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                res.status(500).json({
+                    error: 'Error saving doctor to the database.',
+                });
+            });
+    });
+});
+app.get('/listdoctor',async (req,res)=>{
+    try{
+      const allDoctor = await Doctor.find();
+      res.status(200).json(allDoctor);
+    }catch(error){
+      console.log(error);
+      res.status(500).json({error:'Error in fetching Doctor from the database.'})
+    }
+})
+// app.post('/updateuser', async (req, res) => {
+//     try {
+//         let user = await User.findOne({ userId: req.body.userId });
+
+//         if (!user) {
+//             user = await User.create({
+//                 userId: req.body.userId,
+//                 name: req.body.name,
+//             });
+
+//             console.log(user);
+//             res.send('User created successfully');
+//         } else {
+//             user.name=req.body.name;
+//             await user.save();
+//             console.log(user);
+//             res.send('User already found');
+//         }
+//     } catch (err) {
+//         console.log(err);
+//         res.status(500).send('Internal server error');
+//     }
+// });
+
 app.post('/updateProfile', async (req, res) => {
     const { userId } = req.body;
     const file = req.files.file;
@@ -76,17 +141,13 @@ app.post('/updateProfile', async (req, res) => {
         if (!user) {
             user = await User.create({
                 userId: req.body.userId,
+                name:req.body.name,
                 list: [],
                 addmedicine: [],
             });
         }
 
         user.picture = result.secure_url;
-
-        // Update profile picture for related blogs
-        await Blog.updateMany({ userId }, { $set: { picture: result.secure_url } });
-
-        // Save the updated user
         await user.save();
 
         console.log('Profile picture updated:', result.secure_url);
@@ -96,11 +157,13 @@ app.post('/updateProfile', async (req, res) => {
         res.status(500).json({ error: 'Error in updating profile pic.' });
     }
 });
-app.get('/getProfile/:id', async (req, res) => {
+app.get('/getProfile/:id/:name', async (req, res) => {
     const userId = req.params.id;
+    const name=req.params.name;
     //console.log(userId);
     try {
         const user = await User.find({ userId: userId });
+        user.name=name;
         //console.log(user);
         res.status(200).json({
             user: user
@@ -425,8 +488,49 @@ app.delete('/deladdcontact/:id/:index', async (req, res) => {
         res.status(500).send('Error in backend');
     }
 });
+app.post('/handlemeeting',async(req,res)=>{
+    const {doctorId,userId,date,time} = req.body;
+    try{
+        const doctor =await Doctor.findOne({_id:doctorId});
+        const user =await User.findOne({userId:userId});
+        if (!doctor) {
+            return res.status(404).send('Doctor not found');
+        }
 
-
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        doctor.meeting.push({
+            patientname:user.name,
+            doctorname:doctor.name,
+            date:date,
+            time:time
+        })
+        user.meeting.push({
+            patientname:user.name,
+            doctorname:doctor.name,
+            date:date,
+            time:time
+        })
+        await user.save();
+        await doctor.save();
+        console.log(doctor);
+        console.log(user);
+        res.send('meeting will be update successfully');
+    }catch(err){
+        console.log('err in handlemeeting',err);
+    }
+})
+app.get('/getmeeting/:id',async(req,res)=>{
+    const userId= req.params.id;
+    try{
+        const user =await User.findOne({userId:userId});
+        console.log(user);
+        res.send(user);
+    }catch(err){
+        res.send('error in list meeting backened',err);
+    } 
+})
 mongoose.connect('mongodb+srv://leenagupta993:B0NqYpbQ3IviDJM3@cluster0.iextdh3.mongodb.net/EDoctor')
     .then(() => {
         console.log('website it run at 4000')

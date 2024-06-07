@@ -5,6 +5,10 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    name:{
+        type:String,
+        required:true
+    },
     picture: {
         type: String,
     },
@@ -54,7 +58,27 @@ const UserSchema = new mongoose.Schema({
     favourite: {
         type: [Boolean],
         default: () => new Array(61).fill(false) // Initialize favourite with false
-    }
+    },
+    meeting:[
+        {
+            patientname:{
+                type:String,
+                default:'',
+            },
+            doctorname:{
+                type:String,
+                default:'',
+            },
+            date:{
+                type:Date,
+                default:'',
+            },
+            time:{
+                type:String,
+                default:'',
+            }
+        }
+    ]
 }, {
     timestamps: true,
 });
