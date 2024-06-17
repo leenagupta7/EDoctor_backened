@@ -61,6 +61,10 @@ const UserSchema = new mongoose.Schema({
     },
     meeting:[
         {
+            doctorId:{
+                type:String,
+                default:"",
+            },
             patientname:{
                 type:String,
                 default:'',
