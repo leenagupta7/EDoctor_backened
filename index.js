@@ -1,14 +1,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Doctor = require('./Modal/Doctor');
 const cors = require('cors');
 const app = express();
 const fileupload = require('express-fileupload');
-const User = require('./Modal/UserModal');
 const cloudinary = require('cloudinary').v2;
 const port = process.env.PORT || 4200;
 require('dotenv').config();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 
+var usb = io.of('/user-namespace');
+usb.on('connection',function(socket){
+    console.log('user connected');
+    socket.on('disconnect',function(){
+        console.log('user disconnected');
+    })
+});
 //MiddleWares
 app.use(express.json());
 app.use(cors());
@@ -27,12 +34,14 @@ cloudinary.config({
 const stripeRoutes = require('./routes/stripeRoutes');
 const userRoutes = require('./routes/userRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
+const messageRoute = require('./routes/messageRoute');
 
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/doctor', doctorRoutes);
+app.use('/api/message', messageRoute);
 
-app.listen(4000, () => {
+http.listen(4000, () => {
     console.log('Server running on port 4000');
 });
 mongoose.connect(process.env.database)

@@ -7,6 +7,11 @@ const DoctorSchema = new Schema({
         default: '',
         required:true,
     },
+    email: {
+        type: String,
+        default: '',
+        required:true,
+    },
     specialization: {
         type: String,
         default: '',
@@ -59,6 +64,9 @@ const DoctorSchema = new Schema({
             }
         }
     ]
+}
+,{
+    timestamps: true,
 });
 
 const Doctor = mongoose.model('Doctor', DoctorSchema);

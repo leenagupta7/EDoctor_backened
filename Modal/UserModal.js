@@ -1,25 +1,29 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-    userId: {
+    name: {
         type: String,
         required: true
     },
-    name:{
+    email:{
+        type: String,
+        required: true
+    },
+    password:{
         type:String,
-        required:true
+        required:true,
     },
     picture: {
         type: String,
     },
-    addmedicine:[{
-        text:{
-            type:String,
-            required:true,
+    addmedicine: [{
+        text: {
+            type: String,
+            required: true,
         },
-        dateTime:{
-            type:String,
-            required:true,
+        dateTime: {
+            type: String,
+            required: true,
         }
     }
     ],
@@ -59,30 +63,31 @@ const UserSchema = new mongoose.Schema({
         type: [Boolean],
         default: () => new Array(61).fill(false) // Initialize favourite with false
     },
-    meeting:[
+    meeting: [
         {
-            doctorId:{
-                type:String,
-                default:"",
+            doctorId: {
+                type: String,
+                default: "",
             },
-            patientname:{
-                type:String,
-                default:'',
+            patientname: {
+                type: String,
+                default: '',
             },
-            doctorname:{
-                type:String,
-                default:'',
+            doctorname: {
+                type: String,
+                default: '',
             },
-            date:{
-                type:Date,
-                default:'',
+            date: {
+                type: Date,
+                default: '',
             },
-            time:{
-                type:String,
-                default:'',
+            time: {
+                type: String,
+                default: '',
             }
         }
-    ]
+    ],
+
 }, {
     timestamps: true,
 });
