@@ -32,14 +32,7 @@ const DoctorSchema = new Schema({
         default: '',
         required:true,
     },
-    patient:[
-        {
-            userId:{
-                type:String,
-                default:'',
-            }
-        }
-    ],
+    patient:[{type:String}],
     meeting:[
         {
             doctorId:{

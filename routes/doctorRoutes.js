@@ -4,6 +4,7 @@ const Doctor = require('../Modal/Doctor');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
+const fetchUser = require('../middleware/middleware')
 
 
 router.post('/signup', async (req, res) => {
@@ -38,7 +39,7 @@ router.post('/signup', async (req, res) => {
                 const token = jwt.sign(data,process.env.secret_key)
                 res.json({
                     success:true,
-                    token
+                    token,data
                 })
             })
             .catch(err => {
@@ -49,7 +50,6 @@ router.post('/signup', async (req, res) => {
             });
     });
 });
-
 router.post('/login',async(req,res)=>{
     console.log('hey');
     const {email}=req.body;
@@ -65,7 +65,7 @@ router.post('/login',async(req,res)=>{
         }
            const token = jwt.sign(data,process.env.secret_key);
            console.log(token);
-           res.json({success:true,token});
+           res.json({success:true,token,data});
         }
     catch(error){
         console.log(error);
@@ -81,5 +81,45 @@ router.get('/listdoctor',async (req,res)=>{
       res.status(500).json({error:'Error in fetching Doctor from the database.'})
     }
 })
+router.get('/getuser', fetchUser, async (req, res) => {
+    const id = req.user.id; // Assuming req.user.id is the authenticated user's ID
 
+    try {
+        // Fetch the doctor's data based on the authenticated user's ID
+        const doctor = await Doctor.findById(id);
+
+        if (!doctor) {
+            return res.status(404).json({ error: 'Doctor not found' });
+        }
+
+        // Assuming doctor.patient is an array of objects with userId
+        res.json(doctor.patient); // Return the patient array associated with the doctor
+    } catch (error) {
+        console.error('Error in fetching Doctor:', error);
+        res.status(500).json({ error: 'Error in fetching Doctor from the database.' });
+    }
+});
+router.post('/bookdoctor', fetchUser, async (req, res) => {
+    const id = req.body.doctorId;
+   // console.log(id);
+    const patientid = req.user.id;
+    //console.log('patientid', patientid);
+    try {
+        const data = await Doctor.findByIdAndUpdate(
+            id,
+            { $addToSet: { patient: patientid } },
+            { new: true }
+        );
+        if (!data) {
+            return res.status(404).json({ error: 'Doctor not found' });
+        }
+
+        console.log('Patient added to doctor successfully');
+        console.log('Updated Doctor:', data);
+        res.status(200).json(data); // Sending back the updated doctor data
+    } catch (err) {
+        console.error('Error adding patient to doctor:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 module.exports = router;

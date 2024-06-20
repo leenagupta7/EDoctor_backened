@@ -54,7 +54,7 @@ router.post('/signup',async(req,res)=>{
         const token = jwt.sign(data,process.env.secret_key)
         res.json({
             success:true,
-            token,
+            token,data
         })
     }catch(error){
         console.log(error);
@@ -71,14 +71,17 @@ router.post('/login',async(req,res)=>{
         }
         const passwordMatch = await bcrypt.compare(password,found.password);
         if(passwordMatch){
-           const data = {
-            user:{
-                id:found.id
+            const data={
+                user:{
+                    id:found._id,
+                    name:found.name,
+                    email:found.email,
+               
+                }
             }
-           }
            const token = jwt.sign(data,process.env.secret_key);
           // console.log(token);
-           res.json({success:true,token});
+           res.json({success:true,token,data});
         }else {
             res.status(401).json({message:'Invalid credential'})
         }
