@@ -179,10 +179,7 @@ router.post('/addmedicine', fetchUser,async (req, res) => {
                 { new: true }
             );
             console.log(data);
-            res.status(200).json({
-                updated_user: data,
-            });
-            const savedUser = await newUser.save();
+            const savedUser = await data.save();
             console.log(savedUser);
             res.status(200).json({
                 new_user: savedUser,
@@ -400,6 +397,7 @@ router.delete('/deladdcontact/:index', fetchUser,async (req, res) => {
     }
 });
 router.post('/handlemeeting',fetchUser,async(req,res)=>{
+    console.log('hey');
     const {doctorId,date,time} = req.body;
     const userId=req.user.id;
     console.log('doctor');
@@ -414,6 +412,7 @@ router.post('/handlemeeting',fetchUser,async(req,res)=>{
             return res.status(404).send('User not found');
         }
         doctor.meeting.push({
+            patientId:user._id,
             doctorId:doctor._id,
             patientname:user.name,
             doctorname:doctor.name,
@@ -421,6 +420,7 @@ router.post('/handlemeeting',fetchUser,async(req,res)=>{
             time:time
         })
         user.meeting.push({
+            patientId:user._id,
             doctorId:doctor._id,
             patientname:user.name,
             doctorname:doctor.name,

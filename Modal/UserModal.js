@@ -64,7 +64,10 @@ const UserSchema = new mongoose.Schema({
         default: () => new Array(61).fill(false) // Initialize favourite with false
     },
     meeting: [
-        {
+        {patientId:{
+            type:String,
+            default:"",
+        },
             doctorId: {
                 type: String,
                 default: "",

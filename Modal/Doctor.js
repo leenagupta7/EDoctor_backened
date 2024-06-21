@@ -35,6 +35,10 @@ const DoctorSchema = new Schema({
     patient:[{type:String}],
     meeting:[
         {
+            patientId:{
+                type:String,
+                default:"",
+            },
             doctorId:{
                 type:String,
                 default:"",

@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('cloudinary').v2;
 const fetchUser = require('../middleware/middleware')
-
+const User = require('../Modal/UserModal');
 
 router.post('/signup', async (req, res) => {
     const file = req.files?.file ?? null;
@@ -122,4 +122,47 @@ router.post('/bookdoctor', fetchUser, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+router.get('/getmeeting',fetchUser,async(req,res)=>{
+    const userId= req.user.id;
+    try{
+        const user =await Doctor.findById({_id:userId});
+        //console.log(user);
+        res.send(user);
+    }catch(err){
+        res.send('error in list meeting backened',err);
+    } 
+})
+router.delete('/deletemeeting/:index/:id',fetchUser,async(req,res)=>{
+    const { id:userId, index } = req.params;
+    const id= req.user.id
+    console.log("hey");
+    try{
+        const user = await User.findOne({ _id: userId });
+        const doctor = await Doctor.findOne({_id:id})
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        let updatelist=[];
+        for (let i = 0; i < user.meeting.length; i++) {
+            if (i != index) { 
+                updatelist.push(user.meeting[i]);
+            }
+        }
+        user.meeting=updatelist;
+        console.log(updatelist);
+        await user.save();
+        let updatedoctor=[];
+        for (let i = 0; i < doctor.meeting.length; i++) {
+            if (i != index) { 
+                updatedoctor.push(doctor.meeting[i]);
+            }
+        }
+        doctor.meeting=updatedoctor;
+        await doctor.save();
+        res.send(doctor.meeting);
+    }catch(err){
+        console.log(err);
+        res.send(err);
+    }
+})
 module.exports = router;
