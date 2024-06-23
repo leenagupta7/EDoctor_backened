@@ -32,7 +32,8 @@ const DoctorSchema = new Schema({
         default: '',
         required:true,
     },
-    patient:[{type:String}],
+    patient:[{ type: Schema.Types.ObjectId,
+        ref: 'User'}],
     meeting:[
         {
             patientId:{

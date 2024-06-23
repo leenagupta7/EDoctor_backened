@@ -86,12 +86,12 @@ router.get('/getuser', fetchUser, async (req, res) => {
 
     try {
         // Fetch the doctor's data based on the authenticated user's ID
-        const doctor = await Doctor.findById(id);
+        const doctor = await Doctor.findById(id).populate('patient');
 
         if (!doctor) {
             return res.status(404).json({ error: 'Doctor not found' });
         }
-
+        
         // Assuming doctor.patient is an array of objects with userId
         res.json(doctor.patient); // Return the patient array associated with the doctor
     } catch (error) {
