@@ -27,8 +27,8 @@ router.post('/checkout-session', async (req, res) => {
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
-            success_url: 'http://localhost:5173/success',
-            cancel_url: 'http://localhost:5173/cancel',
+            success_url: 'https://edoctor-eight.vercel.app/success',
+            cancel_url: 'https://edoctor-eight.vercel.app/cancel',
         });
         
         res.send({ id: session.id }); // Ensure the session ID is sent in the response
