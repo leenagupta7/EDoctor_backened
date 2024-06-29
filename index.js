@@ -9,11 +9,9 @@ require('dotenv').config();
 
 //MiddleWares
 app.use(express.json());
-const corsOptions = {
-    origin: 'https://edoctor-eight.vercel.app/',
-  };
-app.use(cors(corsOptions));
-  
+app.use(cors({
+    origin: 'https://edoctor-eight.vercel.app', 
+  }));
 app.use(fileupload({
     useTempFiles: true
 }));
